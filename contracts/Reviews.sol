@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "./Users.sol";
 import "./IUsers.sol";
 import "./Articles.sol";
 
@@ -26,7 +27,7 @@ contract Reviews is ERC721Enumerable, IUsers {
     Counters.Counter private _reviewID;
     mapping(uint256 => Review) private _review;
 
-    event Posted(address indexed poster, uint256 indexed reviewID, uint256 indexed targetID);
+    event Posted(address indexed poster, uint256 indexed reviewID, uint256 targetID);
     event ReviewBanned(uint256 indexed _reviewID);
 
     modifier onlyUser() {
@@ -85,7 +86,7 @@ contract Reviews is ERC721Enumerable, IUsers {
     }
 
     function fillCommentsArray(uint256 reviewID, uint256 commentID) public returns (bool) {
-        // check needed / maybe internal
+        require(msg.sender == _articles.commentsAddress(), "Reviews: this function is only callable by Comments.sol");
         _review[reviewID].comments.push(commentID);
         return true;
     }

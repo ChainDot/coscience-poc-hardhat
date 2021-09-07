@@ -6,6 +6,8 @@ import "./IUsers.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./Users.sol";
+import "./Reviews.sol";
+import "./Comments.sol";
 
 /**
  * @title   Article NFT
@@ -27,6 +29,9 @@ contract Articles is ERC721Enumerable, IUsers {
     Users private _users;
     mapping(uint256 => Article) private _article;
 
+    Comments private _comments;
+    Reviews private _reviews;
+
     /**
      * @notice              Events
      * @dev                 Emitted when an user publish an article
@@ -34,7 +39,7 @@ contract Articles is ERC721Enumerable, IUsers {
      * @param articleID     article's token ID
      * @param abstractCID   ipfs CID of the abstract
      * */
-    event Published(address indexed author, uint256 indexed articleID, string indexed abstractCID);
+    event Published(address indexed author, uint256 indexed articleID, string abstractCID);
 
     event ArticleBanned(uint256 indexed articleID);
 
@@ -68,16 +73,17 @@ contract Articles is ERC721Enumerable, IUsers {
         address[] coAuthor;
         uint256[] comments;
         uint256[] reviews;
-        //metrics
     }
 
     /**
      * @notice              Constructor
-     * @dev                 The parameter {owner_} is set in case the deployer is different from the owner (see Users.sol
+     * @dev                 The parameter {owner_} is set in case the deployer is different from the owner (see Users.sol)
      * @param usersContract address of Users.sol
      * */
     constructor(address usersContract) ERC721("Article", "ART") {
         _users = Users(usersContract);
+        _reviews = new Reviews(address(this), address(_users));
+        _comments = new Comments(address(this), address(_reviews), address(_users));
     }
 
     // external
@@ -113,13 +119,13 @@ contract Articles is ERC721Enumerable, IUsers {
     }
 
     function fillReviewsArray(uint256 articleID, uint256 reviewID) public returns (bool) {
-        // check needed / maybe internal
+        require(msg.sender == address(_reviews), "Articles: this function is only callable by Reviews.sol");
         _article[articleID].reviews.push(reviewID);
         return true;
     }
 
     function fillCommentsArray(uint256 articleID, uint256 commentID) public returns (bool) {
-        // check needed / maybe internal
+        require(msg.sender == address(_comments), "Articles: this function is only callable by Comments.sol");
         _article[articleID].comments.push(commentID);
         return true;
     }
@@ -132,8 +138,12 @@ contract Articles is ERC721Enumerable, IUsers {
         return _article[articleID];
     }
 
-    function nbOfArticles() public view returns (uint256) {
-        return _articleID.current();
+    function commentsAddress() public view returns (address) {
+        return address(_comments);
+    }
+
+    function reviewsAddress() public view returns (address) {
+        return address(_reviews);
     }
 
     function usersContractAddress() public view returns (Users) {

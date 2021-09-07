@@ -6,8 +6,6 @@ const { ethers } = require('hardhat')
 const CONTRACT_NAME = 'Comments'
 const ADDRESS_ZERO = ethers.constants.AddressZero
 const CID = 'Qmfdfxchesocnfdfrfdf54SDDFsDS'
-const HASHED_PASSWORD = ethers.utils.id('password')
-const ABSTRACT_ARRAY = [1, 1]
 
 // UTILS
 // function to get a JS comment list with the contract
@@ -93,13 +91,9 @@ const userCommentsIds = async (comments, userAddress) => {
 
 // TEST
 describe('Comments', function () {
-  let Users,
-    users,
-    Comments,
+  let users,
     comments,
-    Reviews,
     reviews,
-    Articles,
     articles,
     dev,
     owner,
@@ -128,10 +122,11 @@ describe('Comments', function () {
       review2Author,
     ] = await ethers.getSigners()
 
-    Users = await ethers.getContractFactory('Users')
+    const Users = await ethers.getContractFactory('Users')
     users = await Users.connect(dev).deploy(owner.address)
     await users.deployed()
 
+<<<<<<< HEAD
     Articles = await ethers.getContractFactory('Articles')
     articles = await Articles.connect(dev).deploy(users.address)
     await articles.deployed()
@@ -190,14 +185,32 @@ describe('Comments', function () {
         reviews.address
       )
     })
+=======
+    const Articles = await ethers.getContractFactory('Articles')
+    articles = await Articles.connect(dev).deploy(users.address)
+    await articles.deployed()
+
+    // get address of deployed contracts
+    const Reviews = await ethers.getContractFactory('Reviews')
+    const reviewsAddress = await articles.reviewsAddress() // function Articles.sol
+    reviews = await Reviews.attach(reviewsAddress)
+
+    const Comments = await ethers.getContractFactory(CONTRACT_NAME)
+    const commentsAddress = await articles.commentsAddress()
+    comments = await Comments.attach(commentsAddress)
+  })
+
+  describe('Deployment', function () {
+    //
+>>>>>>> upstream/main
   })
 
   describe('Post a comment on article/review/comment', function () {
     let postCall
     beforeEach(async function () {
-      await users.connect(article1Author).register(HASHED_PASSWORD, CID, CID)
+      await users.connect(article1Author).register(CID, CID)
       await users.connect(owner).acceptUser(1)
-      await users.connect(comment1Author).register(HASHED_PASSWORD, CID, CID)
+      await users.connect(comment1Author).register(CID, CID)
       await users.connect(owner).acceptUser(2)
 
       await articles
@@ -273,68 +286,5 @@ describe('Comments', function () {
     })
   })
 
-  /*
-  })
-*/
-
-  describe('banPost', function () {
-    let banCall
-    beforeEach(async function () {
-      await users.connect(article1Author).register(HASHED_PASSWORD, CID, CID)
-      await users.connect(owner).acceptUser(1)
-      await users.connect(comment1Author).register(HASHED_PASSWORD, CID, CID)
-      await users.connect(owner).acceptUser(2)
-
-      await articles
-        .connect(article1Author)
-        .publish([wallet1.address, wallet2.address, wallet3.address], CID, CID)
-      await reviews.connect(article1Author).post(CID, 1)
-
-      await comments.connect(comment1Author).post(CID, articles.address, 1)
-
-      banCall = await comments.connect(owner).banPost(1)
-    })
-
-    it('should emit a commentBanned event on an article', async function () {
-      await expect(banCall).to.emit(comments, 'CommentBanned').withArgs(1)
-    })
-
-    it('should change the struct Comment contentBanned to true', async function () {
-      const struct = await comments.commentInfo(1)
-      expect(struct.contentBanned).to.equal(true)
-    })
-    it('should revert if user is not the owner', async function () {
-      await expect(comments.connect(wallet2).banPost(1)).to.be.revertedWith(
-        'Users:'
-      )
-    })
-  })
-
-  describe('display comments', function () {
-    beforeEach(async function () {
-      await users.connect(comment1Author).register(HASHED_PASSWORD, CID, CID)
-      await users.connect(comment2Author).register(HASHED_PASSWORD, CID, CID)
-      await users.connect(owner).acceptUser(1)
-      await users.connect(owner).acceptUser(2)
-
-      // publish article & review !
-
-      await comments.connect(comment1Author).post(CID, articles.address, 1) // on ARTICLE 1
-      await comments.connect(comment2Author).post(CID, articles.address, 1) // on ARTICLE 1
-      await comments.connect(comment1Author).post(CID, articles.address, 2) // on ARTICLE 2
-      await comments.connect(comment1Author).post(CID, reviews.address, 1) // on REVIEW 1
-      await comments.connect(comment2Author).post(CID, reviews.address, 1) // on REVIEW 1
-      await comments.connect(comment1Author).post(CID, reviews.address, 2) // on REVIEW 2
-    })
-    it('display comments list', async function () {
-      // const obj = await jsCommentList(comments, articles, reviews) // create a JS object
-      // (on comment 4) review 1 => article 1
-      // console.log(obj)
-    })
-    it('display comment list of one user', async function () {
-      // const listOfId = await userCommentsIds(comments, comment1Author.address) // create list of user's tokenID
-      // const obj = await jsCommentList(comments, articles, reviews, listOfId) // create a JS object
-      // console.log(obj)
-    })
-  })
+  describe('ban')
 })

@@ -28,7 +28,7 @@ contract Comments is ERC721Enumerable, IUsers {
     Counters.Counter private _commentID;
     mapping(uint256 => Comment) private _comment;
 
-    event Posted(address indexed poster, uint256 commentID, address indexed target, uint256 targetID);
+    event Posted(address indexed poster, uint256 indexed commentID, address indexed target, uint256 targetID);
     event CommentBanned(uint256 indexed commentID);
 
     modifier onlyUser() {
@@ -60,7 +60,6 @@ contract Comments is ERC721Enumerable, IUsers {
         _articles = Articles(articlesContract);
         _reviews = Reviews(reviewsContract);
         _users = Users(usersContract);
-
         // baseURI override and public
     }
 
