@@ -126,66 +126,6 @@ describe('Comments', function () {
     users = await Users.connect(dev).deploy(owner.address)
     await users.deployed()
 
-<<<<<<< HEAD
-    Articles = await ethers.getContractFactory('Articles')
-    articles = await Articles.connect(dev).deploy(users.address)
-    await articles.deployed()
-
-    Reviews = await ethers.getContractFactory('Reviews')
-    reviews = await Reviews.connect(dev).deploy(articles.address, users.address)
-    await reviews.deployed()
-
-    Comments = await ethers.getContractFactory(CONTRACT_NAME)
-    comments = await Comments.connect(dev).deploy(
-      articles.address,
-      reviews.address,
-      users.address
-    )
-    await comments.deployed()
-
-    // use contracts to create a context
-    /*
-    // users registration
-    const userPending = [
-      article1Author,
-      article2Author,
-      comment1Author,
-      comment2Author,
-      review1Author,
-      review2Author,
-    ]
-    userPending.forEach(async (user, index) => {
-      await users.connect(user).register(HASHED_PASSWORD, CID)
-      await users.connect(owner).acceptUser(index + 1)
-    })
-    // article post
-    await articles
-      .connect(article1Author)
-      .publish([wallet1.address, wallet2.address, wallet3.address], CID, CID)
-    await articles
-      .connect(article2Author)
-      .publish(
-        [wallet3.address, review1Author.address, comment1Author.address],
-        CID,
-        CID
-      )
-    // review post
-    await reviews.connect(review2Author).post(CID, 1) // on article 1
-    await reviews.connect(review1Author).post(CID, 2) // on article 2
-    */
-  })
-
-  describe('Deployment', function () {
-    it('should deploy correctly the contract', async function () {
-      expect(await comments.usersContractAddress()).to.be.equal(users.address)
-      expect(await comments.articlesContractAddress()).to.be.equal(
-        articles.address
-      )
-      expect(await comments.reviewsContractAddress()).to.be.equal(
-        reviews.address
-      )
-    })
-=======
     const Articles = await ethers.getContractFactory('Articles')
     articles = await Articles.connect(dev).deploy(users.address)
     await articles.deployed()
@@ -202,7 +142,6 @@ describe('Comments', function () {
 
   describe('Deployment', function () {
     //
->>>>>>> upstream/main
   })
 
   describe('Post a comment on article/review/comment', function () {
