@@ -29,29 +29,27 @@ describe('Articles', function () {
     users = await Users.connect(dev).deploy(owner.address)
     await users.deployed()
 
-    const Articles = await ethers.getContractFactory(CONTRACT_NAME)
+    const Articles = await ethers.getContractFactory('Articles')
     articles = await Articles.connect(dev).deploy(users.address)
     await articles.deployed()
 
-    // get address of deployed contracts
     const Reviews = await ethers.getContractFactory('Reviews')
-    const reviewsAddress = await articles.reviewsAddress() // function Articles.sol
-    reviews = await Reviews.attach(reviewsAddress)
+    reviews = await Reviews.connect(dev).deploy(users.address, articles.address)
+    await reviews.deployed()
 
     const Comments = await ethers.getContractFactory('Comments')
-    const commentsAddress = await articles.commentsAddress()
-    comments = await Comments.attach(commentsAddress)
+    comments = await Comments.connect(dev).deploy(
+      users.address,
+      articles.address,
+      reviews.address
+    )
+    await comments.deployed()
+
+    // Set contracts address
+    await articles.setContracts(reviews.address, comments.address)
   })
 
-  describe('Deployment', function () {
-    it('should deploy Reviews.sol', async function () {
-      expect(await articles.reviewsAddress()).to.equal(reviews.address)
-    })
-
-    it('should deploy Comments.sol', async function () {
-      expect(await articles.commentsAddress()).to.equal(comments.address)
-    })
-  })
+  describe('Deployment', function () {})
 
   describe('publish an article', function () {
     let publishCall, coAuthor
@@ -168,6 +166,101 @@ describe('Articles', function () {
       ).to.be.revertedWith(
         'Articles: this function is only callable by Reviews.sol'
       )
+    })
+  })
+
+  describe('voteValidity', function () {
+    beforeEach(async function () {
+      await users.connect(article1Author).register(CID, CID)
+      await users.connect(owner).acceptUser(1)
+      const coAuthor = [wallet1.address, wallet2.address, wallet3.address]
+      await articles.connect(article1Author).publish(coAuthor, CID, CID)
+      await users.connect(wallet1).register(CID, CID)
+      await users.connect(owner).acceptUser(2)
+    })
+
+    it('should update the struct Article validity', async function () {
+      await articles.connect(wallet1).voteValidity(1, 1)
+      let struct = await articles.articleInfo(1)
+      expect(struct.validity, 'increment validity').to.equal(1)
+      await articles.connect(article1Author).voteValidity(0, 1)
+      struct = await articles.articleInfo(1)
+      expect(struct.validity, 'decrement validity').to.equal(0)
+    })
+
+    it('should revert if user already voted', async function () {
+      await articles.connect(wallet1).voteValidity(1, 1)
+      await expect(
+        articles.connect(wallet1).voteValidity(1, 1)
+      ).to.be.revertedWith(
+        'Articles: you already vote on validity for this article.'
+      )
+    })
+
+    it('should revert if user is not approved', async function () {
+      await expect(
+        articles.connect(wallet2).voteValidity(1, 1)
+      ).to.be.revertedWith('Users: you must be approved to use this feature.')
+    })
+
+    it('should emit ValidityVoted', async function () {
+      await expect(articles.connect(wallet1).voteValidity(1, 1))
+        .to.emit(articles, 'ValidityVoted')
+        .withArgs(1, 1, 2)
+    })
+
+    it('should revert if article does not exist', async function () {
+      await expect(
+        articles.connect(wallet1).voteValidity(1, 255)
+      ).to.be.revertedWith('Articles: cannot vote on inexistant Article.')
+    })
+  })
+
+  describe('voteImportance', function () {
+    // describe deploy contract
+    beforeEach(async function () {
+      await users.connect(article1Author).register(CID, CID)
+      await users.connect(owner).acceptUser(1)
+      const coAuthor = [wallet1.address, wallet2.address, wallet3.address]
+      await articles.connect(article1Author).publish(coAuthor, CID, CID)
+      await users.connect(wallet1).register(CID, CID)
+      await users.connect(owner).acceptUser(2)
+    })
+
+    it('should update the struct Article vote importance', async function () {
+      await articles.connect(wallet1).voteImportance(1, 1)
+      let struct = await articles.articleInfo(1)
+      expect(struct.importance, 'increment importance').to.equal(1)
+      await articles.connect(article1Author).voteImportance(0, 1)
+      struct = await articles.articleInfo(1)
+      expect(struct.importance, 'decrement importance').to.equal(0)
+    })
+
+    it('should revert if user already voted', async function () {
+      await articles.connect(wallet1).voteImportance(1, 1)
+      await expect(
+        articles.connect(wallet1).voteImportance(1, 1)
+      ).to.be.revertedWith(
+        'Articles: you already vote on importance for this article.'
+      )
+    })
+
+    it('should revert if user is not approved', async function () {
+      await expect(
+        articles.connect(wallet2).voteImportance(1, 1)
+      ).to.be.revertedWith('Users: you must be approved to use this feature.')
+    })
+
+    it('should emit ImportanceVoted', async function () {
+      await expect(articles.connect(wallet1).voteImportance(1, 1))
+        .to.emit(articles, 'ImportanceVoted')
+        .withArgs(1, 1, 2)
+    })
+
+    it('should revert if article does not exist', async function () {
+      await expect(
+        articles.connect(wallet1).voteImportance(1, 255)
+      ).to.be.revertedWith('Articles: cannot vote on inexistant Article.')
     })
   })
 })
